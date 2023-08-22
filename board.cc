@@ -5,13 +5,22 @@
 class Board;
 
 class Position {
-    const std::vector<char> repr_x = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
-    const std::vector<char> repr_y = {'1', '2', '3', '4', '5', '6', '7', '8'};
+    std::vector<char> repr_x = {'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'};
+    std::vector<char> repr_y = {'1', '2', '3', '4', '5', '6', '7', '8'};
     int x, y;
 public:
     Position(int x_arg, int y_arg): x(x_arg), y(y_arg) {}
+    bool operator == (const Position &p) {
+        if(x == p.x && y == p.y){
+            return true;
+        }
+        return false;
+    }
     std::string to_string() {
         return std::string(1, repr_x[x]) + std::string(1, repr_y[y]);
+    }
+    bool in_board(){
+        return (x>=0 && x<8) && (y>=0 && y<8);
     }
     void reflect() {
         y = 7-y;
@@ -30,6 +39,27 @@ public:
     Position position;
     const int value = 0;
     Piece(bool is_white_arg, Position position_arg): is_white(is_white_arg), position(position_arg) {}
+    void move(Position p1){
+        if(!p1.in_board()){
+            std::cout<<"Invalid move: out of board bounds";
+            return;
+        }
+        position = p1;
+    }
+    std::vector<Position> get_valid_moves(Board board){
+        std::vector<Position> valid_moves;
+        std::vector<Position> moves = get_moves(board);
+        for(Position move: moves){
+            Board board_copy = board;
+            if(!board_copy.is_check(is_white)){
+                valid_moves.push_back(move);
+            }
+        }
+        return valid_moves;
+    }
+    void kill(){
+        position = Position(-1, -1);
+    }
     virtual std::vector<Position> get_moves(Board board);
     virtual std::string to_string() {
         return "Y";
@@ -106,7 +136,9 @@ public:
     std::vector<Queen> queen_list;
     std::vector<Piece*> piece_list;
     std::vector<std::vector<Piece*>> board_matrix;
+    bool white_to_play;
     enum PIECE_COUNT {
+        NUM_PIECES = 32,
         NUM_PAWNS = 8,
         NUM_ROOKS = 2,
         NUM_KNIGHTS = 2,
@@ -206,6 +238,7 @@ public:
             piece_list.push_back(&king_list[2*i+1]);
             board_matrix[p.get_x()][p.get_y()] = piece_list.back();
         }
+        white_to_play = true;
     }
     std::string to_string() {
         std::string s;
@@ -222,6 +255,89 @@ public:
             s += '\n';
         }
         return s;
+    }
+    void move(Position p1, Position p2) {
+        Piece* ptr1 = board_matrix[p1.get_x()][p1.get_y()];
+        Piece* ptr2 = board_matrix[p2.get_x()][p2.get_y()];
+        if(!ptr1){
+            std::cout<<"Invalid move: inital position is empty";
+            return;
+        }
+        else if(ptr1->is_white ^ white_to_play){
+            std::cout<<"Invalid move: Opponent's piece is being moved";
+            return;
+        }
+        else{
+            if(!ptr2){
+                ptr1->move(p2);
+            }
+            else if(ptr2 && !(ptr2->is_white ^ white_to_play)){
+                std::cout<<"Invalid move: Self piece being captured";
+                return;
+            }
+            else{
+                for(int i = 0; i < NUM_PIECES; i++){
+                    Piece* ptr = piece_list[i];
+                    if(ptr && (ptr->position == p2)){
+                        ptr->kill();
+                        piece_list[i] = nullptr;
+                        break;
+                    }
+                }
+                board_matrix[p2.get_x()][p2.get_y()] = nullptr;
+                ptr1->move(p2);
+            }
+        }
+        white_to_play ^= 1;
+    }
+    std::vector<std::pair<Position, Position>> get_all_moves(bool is_white){
+        std::vector<std::pair<Position, Position>> all_moves;
+        for(Piece* ptr: piece_list){
+            if(ptr->position.in_board() && ptr->is_white == is_white){
+                Position current_position = ptr->position;
+                std::vector<Position> moves = ptr->get_moves(*this);
+                for(Position move: moves){
+                    all_moves.push_back(std::make_pair(current_position, move));
+                }
+            }
+        }
+        return all_moves;
+    }
+    std::vector<std::pair<Position, Position>> get_all_valid_moves(bool is_white){
+        std::vector<std::pair<Position, Position>> all_valid_moves;
+        for(Piece* ptr: piece_list){
+            if(ptr->position.in_board() && ptr->is_white == is_white){
+                Position current_position = ptr->position;
+                std::vector<Position> moves = ptr->get_valid_moves(*this);
+                for(Position move: moves){
+                    all_valid_moves.push_back(std::make_pair(current_position, move));
+                }
+            }
+        }
+        return all_valid_moves;
+    }
+    std::vector<std::pair<Position, Position>> get_all_valid_moves(){
+        get_all_valid_moves(white_to_play);
+    }
+    bool is_check(bool is_white) {
+        // Check if white player is under check if is_white == true else vice-versa
+        std::vector<std::pair<Position, Position>> all_moves = get_all_moves(!is_white);
+        Position king_position(-1,-1);
+        for(King king: king_list){
+            if(king.is_white == is_white){
+                king_position = king.position;
+                break;
+            }
+        }
+        for(std::pair<Position,Position> move: all_moves){
+            if(king_position == move.second){
+                return true;
+            }
+        }
+        return false;
+    }
+    bool is_check(){
+        is_check(white_to_play);
     }
 };
 
