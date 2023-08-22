@@ -345,25 +345,187 @@ std::vector<Position> Piece::get_moves(Board board) {
     return {};
 }
 std::vector<Position> Pawn::get_moves(Board board) {
-    return {};
+    std::vector<Position> moves;
+    int x_pos = position.get_x();
+    int y_pos = position.get_y();
+    if(is_white){
+        if(y_pos < 7 && board.board_matrix[x_pos][y_pos+1] == nullptr) moves.push_back(Position(x_pos,y_pos+1)); 
+        if(y_pos == 1 && board.board_matrix[x_pos][y_pos+2] == nullptr) moves.push_back(Position(x_pos,y_pos+2)); 
+        if(x_pos > 0 && y_pos < 7 && board.board_matrix[x_pos-1][y_pos+1] != nullptr && board.board_matrix[x_pos-1][y_pos+1]->is_white != is_white) moves.push_back(Position(x_pos-1,y_pos+1));
+        if(x_pos < 7 && y_pos < 7 && board.board_matrix[x_pos+1][y_pos+1] != nullptr && board.board_matrix[x_pos+1][y_pos+1]->is_white != is_white) moves.push_back(Position(x_pos+1,y_pos+1));
+    }else{
+        if(y_pos > 0 && board.board_matrix[x_pos][y_pos-1] == nullptr) moves.push_back(Position(x_pos,y_pos-1));
+        if(y_pos == 6 && board.board_matrix[x_pos][y_pos-2] == nullptr) moves.push_back(Position(x_pos,y_pos-2));
+        if(x_pos > 0 && y_pos > 0 && board.board_matrix[x_pos-1][y_pos-1] != nullptr && board.board_matrix[x_pos-1][y_pos-1]->is_white != is_white) moves.push_back(Position(x_pos-1,y_pos-1));
+        if(x_pos < 7 && y_pos > 0 && board.board_matrix[x_pos+1][y_pos-1] != nullptr && board.board_matrix[x_pos+1][y_pos-1]->is_white != is_white) moves.push_back(Position(x_pos+1,y_pos-1));       
+    }
+
+    return moves;
 }
 std::vector<Position> Rook::get_moves(Board board) {
-    return {};
+    std::vector<Position> moves;
+    
+    for(int i = position.get_x() + 1, j = position.get_y(); i < 8; i++){
+        if(board.board_matrix[i][j]==nullptr){ 
+            moves.push_back(Position(i,j));
+        }else{
+            if(board.board_matrix[i][j]->is_white == is_white){ // my piece 
+                break;
+            }else{ // opponent piece 
+                moves.push_back(Position(i,j));
+                break;
+            }
+        }
+    }
+
+    for(int i = position.get_x() - 1, j = position.get_y(); i >=0 ; i--){
+        if(board.board_matrix[i][j]==nullptr){
+            moves.push_back(Position(i,j));
+        }else {
+            if(board.board_matrix[i][j]->is_white == is_white){ // my piece 
+                break;
+            }else{ // opponent piece 
+                moves.push_back(Position(i,j));
+                break;
+            }
+        }
+    }
+
+    for(int i = position.get_x(), j = position.get_y() + 1; j < 8; j++){
+        if(board.board_matrix[i][j]==nullptr){
+            moves.push_back(Position(i,j));
+        }else{
+            if(board.board_matrix[i][j]->is_white == is_white){ // my piece 
+                break;
+            }else{ // opponent piece 
+                moves.push_back(Position(i,j));
+                break;
+            }
+        }
+    }
+
+    for(int i = position.get_x(), j = position.get_y() - 1; j >=0 ; j--){
+        if(board.board_matrix[i][j]==nullptr){
+            moves.push_back(Position(i,j));
+        }else{
+            if(board.board_matrix[i][j]->is_white == is_white){ // my piece 
+                break;
+            }else{ // opponent piece 
+                moves.push_back(Position(i,j));
+                break;
+            }
+        }
+    }
+
+    
+    return moves;
 }
 std::vector<Position> Knight::get_moves(Board board) {
-    return {};
+    std::vector<Position> moves;
+    std::vector<std::pair<int,int>> possible_pos = { {1,2},{-1,2},{-2,1},{-2,-1},{-1,-2},{1,-2},{2,-1},{2,1} };
+    for(auto pr : possible_pos){
+        int new_x = position.get_x() + pr.first;
+        int new_y = position.get_y() + pr.second;
+        if(new_x >= 0 && new_x < 8 && new_y >= 0 && new_y < 8 ){
+            if(board.board_matrix[new_x][new_y] == nullptr || board.board_matrix[new_x][new_y]->is_white != is_white){
+                moves.push_back(Position(new_x,new_y));
+            }
+        }
+   }
+
+   return moves;
 }
 std::vector<Position> Bishop::get_moves(Board board) {
-    return {};
+    std::vector<Position> moves;
+    
+    for(int i = position.get_x() + 1, j = position.get_y() + 1; i < 8 && j < 8; i++,j++){
+        if(board.board_matrix[i][j]==nullptr){ 
+            moves.push_back(Position(i,j));
+        }else{
+            if(board.board_matrix[i][j]->is_white == is_white){ // my piece 
+                break;
+            }else{ // opponent piece 
+                moves.push_back(Position(i,j));
+                break;
+            }
+        }
+    }
+
+    for(int i = position.get_x() - 1, j = position.get_y() + 1; i >=0 && j < 8; i--,j++){
+        if(board.board_matrix[i][j]==nullptr){
+            moves.push_back(Position(i,j));
+        }else {
+            if(board.board_matrix[i][j]->is_white == is_white){ // my piece 
+                break;
+            }else{ // opponent piece 
+                moves.push_back(Position(i,j));
+                break;
+            }
+        }
+    }
+
+    for(int i = position.get_x() + 1, j = position.get_y() - 1; i < 8 && j >= 0; i++,j--){
+        if(board.board_matrix[i][j]==nullptr){
+            moves.push_back(Position(i,j));
+        }else{
+            if(board.board_matrix[i][j]->is_white == is_white){ // my piece 
+                break;
+            }else{ // opponent piece 
+                moves.push_back(Position(i,j));
+                break;
+            }
+        }
+    }
+
+    for(int i = position.get_x() - 1, j = position.get_y() - 1; i >= 0 && j >= 0 ;i--, j--){
+        if(board.board_matrix[i][j]==nullptr){
+            moves.push_back(Position(i,j));
+        }else{
+            if(board.board_matrix[i][j]->is_white == is_white){ // my piece 
+                break;
+            }else{ // opponent piece 
+                moves.push_back(Position(i,j));
+                break;
+            }
+        }
+    }
+
+    
+    return moves;
 }
 std::vector<Position> King::get_moves(Board board) {
-    return {};
+    std::vector<Position> moves;
+    std::vector<std::pair<int,int>> possible_pos = { {1,0},{1,1},{0,1},{-1,1},{-1,0},{-1,-1},{0,-1},{1,-1} };
+    for(auto pr : possible_pos){
+        int new_x = position.get_x() + pr.first;
+        int new_y = position.get_y() + pr.second;
+        if(new_x >= 0 && new_x < 8 && new_y >= 0 && new_y < 8 ){
+            if(board.board_matrix[new_x][new_y] == nullptr || board.board_matrix[new_x][new_y]->is_white != is_white){
+                moves.push_back(Position(new_x,new_y));
+            }
+        }
+   }
+
+   return moves;
 }
 std::vector<Position> Queen::get_moves(Board board) {
-    return {};
+    Rook fake_rook(is_white,position);
+    std::vector<Position> rook_moves = fake_rook.get_moves(board);
+    Bishop fake_bishop(is_white,position);
+    std::vector<Position> bishop_moves = fake_bishop.get_moves(board);
+    std::vector<Position> queen_moves;
+    for( auto x : rook_moves) queen_moves.push_back(x);
+    for( auto x : bishop_moves) queen_moves.push_back(x);
+    return queen_moves;
 }
 
 int main() {
     Board board = Board();
     std::cout<< board.to_string() <<'\n';
+
+    std::vector<Position> v =  board.board_matrix[1][1]->get_moves(board);
+    for( auto x : v){
+        std::cout<<x.to_string()<<'\n';
+    }
+    
 }
