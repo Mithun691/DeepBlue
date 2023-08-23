@@ -39,7 +39,7 @@ class Piece {
 public:
     bool is_white;
     Position position;
-    const int value = 0;
+    int value = 0;
     Piece(bool is_white_arg, Position position_arg): is_white(is_white_arg), position(position_arg) {}
     void move(Position p1){
         if(!p1.in_board()){
@@ -60,7 +60,7 @@ public:
 
 class Pawn : public Piece {
 public:
-    const int value = 1;
+    int value = 1;
     Pawn(bool is_white_arg, Position position_arg): Piece(is_white_arg, position_arg) {}
     virtual std::vector<Position> get_moves(Board board) override;
     std::string to_string() override {
@@ -70,7 +70,7 @@ public:
 
 class Rook : public Piece {
 public:
-    const int value = 5;
+    int value = 5;
     Rook(bool is_white_arg, Position position_arg): Piece(is_white_arg, position_arg) {}
     virtual std::vector<Position> get_moves(Board board) override;
     std::string to_string() override {
@@ -80,7 +80,7 @@ public:
 
 class Knight : public Piece {
 public:
-    const int value = 3;
+    int value = 3;
     Knight(bool is_white_arg, Position position_arg): Piece(is_white_arg, position_arg) {}
     virtual std::vector<Position> get_moves(Board board) override;
     std::string to_string() override {
@@ -90,7 +90,7 @@ public:
 
 class Bishop : public Piece {
 public:
-    const int value = 3;
+    int value = 3;
     Bishop(bool is_white_arg, Position position_arg): Piece(is_white_arg, position_arg) {}
     virtual std::vector<Position> get_moves(Board board) override;
     std::string to_string() override {
@@ -100,7 +100,7 @@ public:
 
 class King : public Piece {
 public:
-    const int value = 4;
+    int value = 4;
     King(bool is_white_arg, Position position_arg): Piece(is_white_arg, position_arg) {}
     virtual std::vector<Position> get_moves(Board board) override;
     std::string to_string() override {
@@ -110,7 +110,7 @@ public:
 
 class Queen : public Piece {
 public:
-    const int value = 9;
+    int value = 9;
     Queen(bool is_white_arg, Position position_arg): Piece(is_white_arg, position_arg) {}
     virtual std::vector<Position> get_moves(Board board) override;
     std::string to_string() override {
@@ -137,7 +137,7 @@ public:
         NUM_BISHOPS = 2,
         NUM_KINGS = 1,
         NUM_QUEENS = 1
-    };  
+    };
     Board() {
         std::vector<Piece*> null_row(8, nullptr);
         for(int i = 0; i < 8; i++){
@@ -182,55 +182,83 @@ public:
             p.reflect();
             queen_list.push_back(Queen(false, p));
         }
-        for(int i = 0; i < NUM_PAWNS; i++){
-            Position p = white_pawn_positions[i];
-            piece_list.push_back(&pawn_list[2*i]);
-            board_matrix[p.get_x()][p.get_y()] = piece_list.back();
-            p.reflect();
-            piece_list.push_back(&pawn_list[2*i+1]);
-            board_matrix[p.get_x()][p.get_y()] = piece_list.back();
-        }
-        for(int i = 0; i < NUM_ROOKS; i++){
-            Position p = white_rook_positions[i];
-            piece_list.push_back(&rook_list[2*i]);
-            board_matrix[p.get_x()][p.get_y()] = piece_list.back();
-            p.reflect();
-            piece_list.push_back(&rook_list[2*i+1]);
-            board_matrix[p.get_x()][p.get_y()] = piece_list.back();
-        }
-        for(int i = 0; i < NUM_KNIGHTS; i++){
-            Position p = white_knight_positions[i];
-            piece_list.push_back(&knight_list[2*i]);
-            board_matrix[p.get_x()][p.get_y()] = piece_list.back();
-            p.reflect();
-            piece_list.push_back(&knight_list[2*i+1]);
-            board_matrix[p.get_x()][p.get_y()] = piece_list.back();
-        }
-        for(int i = 0; i < NUM_BISHOPS; i++){
-            Position p = white_bishop_positions[i];
-            piece_list.push_back(&bishop_list[2*i]);
-            board_matrix[p.get_x()][p.get_y()] = piece_list.back();
-            p.reflect();
-            piece_list.push_back(&bishop_list[2*i+1]);
-            board_matrix[p.get_x()][p.get_y()] = piece_list.back();
-        }
-        for(int i = 0; i < NUM_QUEENS; i++){
-            Position p = white_queen_positions[i];
-            piece_list.push_back(&queen_list[2*i]);
-            board_matrix[p.get_x()][p.get_y()] = piece_list.back();
-            p.reflect();
-            piece_list.push_back(&queen_list[2*i+1]);
-            board_matrix[p.get_x()][p.get_y()] = piece_list.back();
-        }
-        for(int i = 0; i < NUM_KINGS; i++){
-            Position p = white_king_positions[i];
-            piece_list.push_back(&king_list[2*i]);
-            board_matrix[p.get_x()][p.get_y()] = piece_list.back();
-            p.reflect();
-            piece_list.push_back(&king_list[2*i+1]);
-            board_matrix[p.get_x()][p.get_y()] = piece_list.back();
-        }
         white_to_play = true;
+        init_pointers();
+    }
+    Board(const Board& other) {
+        pawn_list = other.pawn_list;
+        rook_list = other.rook_list;
+        knight_list = other.knight_list;
+        bishop_list = other.bishop_list;
+        king_list = other.king_list;
+        queen_list = other.queen_list;
+        white_to_play = other.white_to_play;
+        std::vector<Piece*> null_row(8, nullptr);
+        for(int i = 0; i < 8; i++){
+            board_matrix.push_back(null_row);
+        }
+        init_pointers();
+    }
+    void init_pointers(){
+        for(int i = 0; i < 8; i++){
+            for(int j = 0; j < 8; j++){
+                board_matrix[i][j] = nullptr;
+            }
+        }
+        piece_list = {};
+        for(int i = 0; i < 2*NUM_PAWNS; i++){
+            Position p = pawn_list[i].position;
+            piece_list.push_back(&pawn_list[i]);
+            if(p.in_board()){
+                board_matrix[p.get_x()][p.get_y()] = &pawn_list[i];
+            }
+        }
+        for(int i = 0; i < 2*NUM_ROOKS; i++){
+            Position p = rook_list[i].position;
+            piece_list.push_back(&rook_list[i]);
+            if(p.in_board()){
+                board_matrix[p.get_x()][p.get_y()] = &rook_list[i];
+            }
+        }
+        for(int i = 0; i < 2*NUM_KNIGHTS; i++){
+            Position p = knight_list[i].position;
+            piece_list.push_back(&knight_list[i]);
+            if(p.in_board()){
+                board_matrix[p.get_x()][p.get_y()] = &knight_list[i];
+            }
+        }
+        for(int i = 0; i < 2*NUM_BISHOPS; i++){
+            Position p = bishop_list[i].position;
+            piece_list.push_back(&bishop_list[i]);
+            if(p.in_board()){
+                board_matrix[p.get_x()][p.get_y()] = &bishop_list[i];
+            }
+        }
+        for(int i = 0; i < 2*NUM_QUEENS; i++){
+            Position p = queen_list[i].position;
+            piece_list.push_back(&queen_list[i]);
+            if(p.in_board()){
+                board_matrix[p.get_x()][p.get_y()] = &queen_list[i];
+            }
+        }
+        for(int i = 0; i < 2*NUM_KINGS; i++){
+            Position p = king_list[i].position;
+            piece_list.push_back(&king_list[i]);
+            if(p.in_board()){
+                board_matrix[p.get_x()][p.get_y()] = &king_list[i];
+            }
+        }
+    }
+    Board& operator=(const Board& other) {
+        pawn_list = other.pawn_list;
+        rook_list = other.rook_list;
+        knight_list = other.knight_list;
+        bishop_list = other.bishop_list;
+        king_list = other.king_list;
+        queen_list = other.queen_list;
+        white_to_play = other.white_to_play;
+        init_pointers();
+        return *this;
     }
     std::string to_string() {
         std::string s;
@@ -344,6 +372,7 @@ std::vector<Position> Piece::get_valid_moves(Board board){
         std::vector<Position> moves = get_moves(board);
         for(Position move: moves){
             Board board_copy = board;
+            board_copy.move(position,move);
             if(!board_copy.is_check(is_white)){
                 valid_moves.push_back(move);
             }
@@ -404,7 +433,7 @@ std::vector<Position> Knight::get_moves(Board board) {
 }
 std::vector<Position> Bishop::get_moves(Board board) {
     std::vector<Position> moves;
-    std::vector<std::pair<int,int>> directions = {{1,1},{-1,1},{1,-1},{1,1}};
+    std::vector<std::pair<int,int>> directions = {{1,1},{-1,1},{1,-1},{-1,-1}};
     for(std::pair<int,int> direction: directions){
         Position next = Position(position.get_x()+direction.first, position.get_y()+direction.second);
         while(next.in_board()){
@@ -424,7 +453,7 @@ std::vector<Position> Bishop::get_moves(Board board) {
 }
 std::vector<Position> King::get_moves(Board board) {
     std::vector<Position> moves;
-    std::vector<std::pair<int,int>> diffs = {{1,1},{-1,1},{1,-1},{1,1},{1,0},{0,1},{-1,0},{0,-1}};
+    std::vector<std::pair<int,int>> diffs = {{1,1},{-1,1},{1,-1},{-1,-1},{1,0},{0,1},{-1,0},{0,-1}};
     for(std::pair<int,int> diff: diffs){
         Position next = Position(position.get_x() + diff.first, position.get_y() + diff.second);
         if(next.in_board()){
@@ -437,7 +466,7 @@ std::vector<Position> King::get_moves(Board board) {
 }
 std::vector<Position> Queen::get_moves(Board board) {
     std::vector<Position> moves;
-    std::vector<std::pair<int,int>> directions = {{1,1},{-1,1},{1,-1},{1,1},{1,0},{0,1},{-1,0},{0,-1}};
+    std::vector<std::pair<int,int>> directions = {{1,1},{-1,1},{1,-1},{-1,-1},{1,0},{0,1},{-1,0},{0,-1}};
     for(std::pair<int,int> direction: directions){
         Position next = Position(position.get_x()+direction.first, position.get_y()+direction.second);
         while(next.in_board()){
@@ -457,10 +486,12 @@ std::vector<Position> Queen::get_moves(Board board) {
 }
 
 int main() {
-    Board board = Board();
+    Board board;
     std::cout<< board.to_string() <<'\n';
     srand(time(0));
     for(int i = 0; i<=1000; i++){
+        std::cout<<"ALL MOVES COUNT:"<<board.get_all_moves(board.white_to_play).size()<<'\n';
+        std::cout<<"VALID MOVES COUNT:"<<board.get_all_valid_moves().size()<<'\n';
         std::vector<std::pair<Position, Position>> moves = board.get_all_valid_moves();
         if(moves.size() == 0 && board.is_check()){
             std::cout<<"CHECKMATE!!!"<<'\n';
@@ -475,5 +506,14 @@ int main() {
             board.move(move.first, move.second);
         }
         std::cout<< board.to_string() <<'\n';
-    }    
+        int dead_count = -32;
+        for(int i=0; i<8; i++){
+            for(int j=0; j<8; j++){
+                if(board.board_matrix[i][j]==nullptr){
+                    dead_count += 1;
+                }
+            }
+        }
+        std::cout<<"DEAD COUNT:"<<dead_count<<'\n'<<"----------------------"<<'\n';
+    }
 }
