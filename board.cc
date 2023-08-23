@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <cstdlib>
+#include <time.h>
 
 class Board;
 
@@ -274,12 +275,11 @@ public:
                     Piece* ptr = piece_list[i];
                     if(ptr && (ptr->position == p2)){
                         ptr->kill();
-                        piece_list[i] = nullptr;
                         break;
                     }
                 }
-                board_matrix[p1.get_x()][p1.get_y()] = nullptr;
                 board_matrix[p2.get_x()][p2.get_y()] = ptr1;
+                board_matrix[p1.get_x()][p1.get_y()] = nullptr;
                 ptr1->move(p2);
             }
         }
@@ -528,7 +528,7 @@ std::vector<Position> Queen::get_moves(Board board) {
 int main() {
     Board board = Board();
     std::cout<< board.to_string() <<'\n';
-
+    srand(time(0));
     for(int i = 0 ; i<=1000; i++){
         std::vector<std::pair<Position, Position>> moves = board.get_all_valid_moves();
         if(moves.size() == 0 && board.is_check()){
