@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <string>
+#include <cstdlib>
 
 class Board;
 
@@ -46,21 +47,11 @@ public:
         }
         position = p1;
     }
-    std::vector<Position> get_valid_moves(Board board){
-        std::vector<Position> valid_moves;
-        std::vector<Position> moves = get_moves(board);
-        for(Position move: moves){
-            Board board_copy = board;
-            if(!board_copy.is_check(is_white)){
-                valid_moves.push_back(move);
-            }
-        }
-        return valid_moves;
-    }
     void kill(){
         position = Position(-1, -1);
     }
     virtual std::vector<Position> get_moves(Board board);
+    std::vector<Position> get_valid_moves(Board board);
     virtual std::string to_string() {
         return "Y";
     }
@@ -251,6 +242,7 @@ public:
                 else{
                     s += " ";
                 }
+                s += " ";
             }
             s += '\n';
         }
@@ -259,17 +251,19 @@ public:
     void move(Position p1, Position p2) {
         Piece* ptr1 = board_matrix[p1.get_x()][p1.get_y()];
         Piece* ptr2 = board_matrix[p2.get_x()][p2.get_y()];
-        if(!ptr1){
-            std::cout<<"Invalid move: inital position is empty";
+        if(ptr1 == nullptr){
+            std::cout<<"Invalid move: inital position is empty"<<'\n';
             return;
         }
         else if(ptr1->is_white ^ white_to_play){
-            std::cout<<"Invalid move: Opponent's piece is being moved";
+            std::cout<<"Invalid move: Opponent's piece is being moved"<<'\n';
             return;
         }
         else{
-            if(!ptr2){
+            if(ptr2 == nullptr){
                 ptr1->move(p2);
+                board_matrix[p2.get_x()][p2.get_y()] = ptr1;
+                board_matrix[p1.get_x()][p1.get_y()] = nullptr;
             }
             else if(ptr2 && !(ptr2->is_white ^ white_to_play)){
                 std::cout<<"Invalid move: Self piece being captured";
@@ -284,7 +278,8 @@ public:
                         break;
                     }
                 }
-                board_matrix[p2.get_x()][p2.get_y()] = nullptr;
+                board_matrix[p1.get_x()][p1.get_y()] = nullptr;
+                board_matrix[p2.get_x()][p2.get_y()] = ptr1;
                 ptr1->move(p2);
             }
         }
@@ -317,7 +312,7 @@ public:
         return all_valid_moves;
     }
     std::vector<std::pair<Position, Position>> get_all_valid_moves(){
-        get_all_valid_moves(white_to_play);
+        return get_all_valid_moves(white_to_play);
     }
     bool is_check(bool is_white) {
         // Check if white player is under check if is_white == true else vice-versa
@@ -337,13 +332,24 @@ public:
         return false;
     }
     bool is_check(){
-        is_check(white_to_play);
+        return is_check(white_to_play);
     }
 };
 
 std::vector<Position> Piece::get_moves(Board board) {
     return {};
 }
+ std::vector<Position> Piece::get_valid_moves(Board board){
+        std::vector<Position> valid_moves;
+        std::vector<Position> moves = get_moves(board);
+        for(Position move: moves){
+            Board board_copy = board;
+            if(!board_copy.is_check(is_white)){
+                valid_moves.push_back(move);
+            }
+        }
+        return valid_moves;
+    }
 std::vector<Position> Pawn::get_moves(Board board) {
     std::vector<Position> moves;
     int x_pos = position.get_x();
@@ -523,9 +529,20 @@ int main() {
     Board board = Board();
     std::cout<< board.to_string() <<'\n';
 
-    std::vector<Position> v =  board.board_matrix[1][1]->get_moves(board);
-    for( auto x : v){
-        std::cout<<x.to_string()<<'\n';
-    }
-    
+    for(int i = 0 ; i<=1000; i++){
+        std::vector<std::pair<Position, Position>> moves = board.get_all_valid_moves();
+        if(moves.size() == 0 && board.is_check()){
+            std::cout<<"CHECKMATE!!!"<<'\n';
+            break;
+        }
+        else if(moves.size() == 0 && !board.is_check()){
+            std::cout<<"STALEMATE!!!"<<'\n';
+            break;
+        }
+        else{
+            std::pair<Position, Position> move = moves[rand() % (int)moves.size()];
+            board.move(move.first, move.second);
+        }
+        std::cout<< board.to_string() <<'\n';
+    }    
 }
